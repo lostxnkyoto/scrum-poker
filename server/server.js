@@ -54,7 +54,8 @@ function getRoomInfo(roomCode) {
     allNonHostsVoted,
     canReveal: selectedCount > 0,
     isRevealed: room.isRevealed,
-    cards: room.isRevealed ? getCardsWithHostDefault(room) : null
+    cards: room.isRevealed ? getCardsWithHostDefault(room) : null,
+    votedPlayers: Array.from(room.cards.keys())
   };
   
   return roomInfo;

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PlayerList = ({ players, cards, isRevealed, currentPlayerId }) => {
+const PlayerList = ({ players, cards, isRevealed, currentPlayerId, roomInfo }) => {
   return (
     <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-white/50 dark:border-slate-700/50">
       <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center">
@@ -10,7 +10,7 @@ const PlayerList = ({ players, cards, isRevealed, currentPlayerId }) => {
       
       <div className="space-y-3">
         {players.map((player) => {
-          const hasSelectedCard = cards && cards[player.id] !== undefined;
+          const hasSelectedCard = roomInfo?.votedPlayers?.includes(player.id) || false;
           const cardValue = isRevealed && cards ? cards[player.id] : null;
           const isCurrentPlayer = player.id === currentPlayerId;
           

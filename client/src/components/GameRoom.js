@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PlayerList from './PlayerList';
 
 const CARDS = [1, 2, 3, 5, 8, 13, 21, '?'];
@@ -16,6 +16,13 @@ const GameRoom = ({
 }) => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  useEffect(() => {
+    if (roomInfo && !roomInfo.isRevealed && roomInfo.selectedCount === 0) {
+      setSelectedCard(null);
+    }
+  }, [roomInfo?.isRevealed, roomInfo?.selectedCount]);
 
   if (!roomInfo) {
     return (
@@ -46,8 +53,25 @@ const GameRoom = ({
 
   const copyRoomLink = () => {
     const url = `${window.location.origin}/room/${roomInfo.code}`;
-    navigator.clipboard.writeText(url);
-    setShowShareModal(false);
+    navigator.clipboard.writeText(url).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => {
+        setShowShareModal(false);
+        setCopySuccess(false);
+      }, 1500);
+    }).catch(() => {
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopySuccess(true);
+      setTimeout(() => {
+        setShowShareModal(false);
+        setCopySuccess(false);
+      }, 1500);
+    });
   };
 
   const getCardStats = () => {
@@ -235,6 +259,7 @@ const GameRoom = ({
               cards={roomInfo.cards}
               isRevealed={roomInfo.isRevealed}
               currentPlayerId={playerId}
+              roomInfo={roomInfo}
             />
 
             {roomInfo.isRevealed && stats && (
@@ -289,7 +314,10 @@ const GameRoom = ({
             </div>
             <div className="flex space-x-3">
               <button
-                onClick={() => setShowShareModal(false)}
+                onClick={() => {
+                  setShowShareModal(false);
+                  setCopySuccess(false);
+                }}
                 className="flex-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-3 px-4 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-200 font-semibold"
               >
                 Close
@@ -298,7 +326,7 @@ const GameRoom = ({
                 onClick={copyRoomLink}
                 className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-4 rounded-2xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 font-semibold shadow-lg"
               >
-                📋 Copy Link
+                {copySuccess ? '✅ Copied!' : '📋 Copy Link'}
               </button>
             </div>
           </div>
