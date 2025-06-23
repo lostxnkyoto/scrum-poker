@@ -17,6 +17,7 @@ const GameRoom = ({
   const [selectedCard, setSelectedCard] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copyError, setCopyError] = useState(false);
 
   useEffect(() => {
     if (roomInfo && !roomInfo.isRevealed && roomInfo.selectedCount === 0) {
@@ -53,25 +54,50 @@ const GameRoom = ({
 
   const copyRoomLink = () => {
     const url = `${window.location.origin}/room/${roomInfo.code}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopySuccess(true);
-      setTimeout(() => {
-        setShowShareModal(false);
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopySuccess(true);
+        setTimeout(() => {
+          setShowShareModal(false);
+          setCopySuccess(false);
+        }, 1500);
+      }).catch(() => {
+        fallbackCopy(url);
+      });
+    } else {
+      fallbackCopy(url);
+    }
+  };
+
+  const fallbackCopy = (text) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        setCopySuccess(true);
+        setCopyError(false);
+      } else {
         setCopySuccess(false);
-      }, 1500);
-    }).catch(() => {
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setCopySuccess(true);
-      setTimeout(() => {
-        setShowShareModal(false);
-        setCopySuccess(false);
-      }, 1500);
-    });
+        setCopyError(true);
+      }
+    } catch (err) {
+      setCopySuccess(false);
+      setCopyError(true);
+    }
+    document.body.removeChild(textArea);
+    setTimeout(() => {
+      setShowShareModal(false);
+      setCopySuccess(false);
+      setCopyError(false);
+    }, 1500);
   };
 
   const getCardStats = () => {
@@ -317,6 +343,7 @@ const GameRoom = ({
                 onClick={() => {
                   setShowShareModal(false);
                   setCopySuccess(false);
+                  setCopyError(false);
                 }}
                 className="flex-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-3 px-4 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-all duration-200 font-semibold"
               >
@@ -326,7 +353,7 @@ const GameRoom = ({
                 onClick={copyRoomLink}
                 className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-4 rounded-2xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 font-semibold shadow-lg"
               >
-                {copySuccess ? '✅ Copied!' : '📋 Copy Link'}
+                {copySuccess ? '✅ Copied!' : copyError ? '❌ Failed' : '📋 Copy Link'}
               </button>
             </div>
           </div>
