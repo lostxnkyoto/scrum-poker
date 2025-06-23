@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  server:
+    build: ./server
+    container_name: scram-server
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped
+    networks:
+      - scram-network
+
+  client:
+    build: ./client
+    container_name: scram-client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - scram-network
+
+networks:
+  scram-network:
+    driver: bridge 
